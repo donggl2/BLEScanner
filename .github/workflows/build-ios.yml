@@ -1,0 +1,115 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  # 允许手动触发
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build:
+    runs-on: macos-14  # 使用最新的 macOS 运行器（免费）
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.0'  # 或使用 latest-stable
+        
+    - name: Show Xcode Version
+      run: |
+        xcode-select -p
+        xcodebuild -version
+        
+    - name: Install dependencies (if using CocoaPods/SPM)
+      run: |
+        # 如果使用 CocoaPods，取消下面注释
+        # cd BLEScanner && pod install
+        echo "No external dependencies to install"
+        
+    - name: Build for iOS Simulator (测试编译)
+      run: |
+        cd BLEScanner
+        xcodebuild \
+          -project BLEScanner.xcodeproj \
+          -scheme BLEScanner \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+          -configuration Debug \
+          clean build
+          
+    - name: Build for Device (生成 .app 文件)
+      run: |
+        cd BLEScanner
+        # 使用通用 iOS 设备目标编译
+        xcodebuild \
+          -project BLEScanner.xcodeproj \
+          -scheme BLEScanner \
+          -destination 'generic/platform=iOS' \
+          -configuration Release \
+          -derivedDataPath build \
+          clean build \
+          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          DEVELOPMENT_TEAM=""
+          
+    - name: Package .app to .ipa
+      run: |
+        cd BLEScanner/build/Build/Products/Release-iphoneos
+        
+        # 查找 .app 文件
+        APP_NAME=$(find . -name "*.app" -type d | head -n 1)
+        
+        if [ -z "$APP_NAME" ]; then
+          echo "? 未找到 .app 文件"
+          exit 1
+        fi
+        
+        echo "? 找到应用: $APP_NAME"
+        
+        # 创建 Payload 目录
+        mkdir -p Payload
+        cp -r "$APP_NAME" Payload/
+        
+        # 打包成 ipa
+        zip -r BLEScanner.ipa Payload
+        
+        # 移动到根目录方便下载
+        mv BLEScanner.ipa ../../../..
+        
+        echo "? 成功生成 BLEScanner.ipa"
+        
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BLEScanner-IPA
+        path: BLEScanner/BLEScanner.ipa
+        retention-days: 7
+        
+    - name: Get Artifact URL
+      run: |
+        echo "? 构建完成！"
+        echo ""
+        echo "=========================================="
+        echo "下载步骤："
+        echo "1. 打开 GitHub 仓库页面"
+        echo "2. 点击 Actions 标签"
+        echo "3. 选择最新的 workflow run"
+        echo "4. 在 Artifacts 部分下载 BLEScanner-IPA"
+        echo "=========================================="
+        echo ""
+        echo "?? 注意：此 IPA 未签名，安装前需要使用 AltStore、SideStore 或 Xcode 重新签名"
