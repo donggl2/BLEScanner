@@ -2,23 +2,10 @@ import Foundation
 import CoreBluetooth
 import Combine
 
-// ============================================================================
 // MARK: - MAC Address Mode Configuration
-// ============================================================================
-/// To enable real MAC address reading (for sideloaded apps only):
-/// 
-/// 1. In Xcode, select your target
-/// 2. Go to "Build Settings" ¡ú "Swift Compiler - Custom Flags"
-/// 3. In "Other Swift Flags" add: -DENABLE_REAL_MAC_ADDRESS
-/// 4. Build and run on device
-/// 
-/// ?? WARNING: Apps using real MAC addresses CANNOT be submitted to App Store!
-///    Apple will reject apps that use private APIs.
-///    This is only for enterprise/internal/sideloaded apps.
-///
-/// To build for App Store (using virtual MAC):
-/// Simply remove the -DENABLE_REAL_MAC_ADDRESS flag.
-// ============================================================================
+// Enable real MAC via Build Settings > Swift Compiler - Custom Flags:
+// Other Swift Flags: -DENABLE_REAL_MAC_ADDRESS
+// WARNING: Not App Store safe. Remove flag for App Store builds.
 
 #if ENABLE_REAL_MAC_ADDRESS
 import ObjectiveC
@@ -213,14 +200,14 @@ class BLEManager: NSObject, ObservableObject {
         // Strategy 1A: Try to get real MAC from private API
         if let realMac = peripheral.realMacAddress {
             macAddressMap[peripheralUUID] = realMac
-            print("? Got REAL MAC address from private API: \(realMac)")
+            print("[MAC] Got REAL MAC from private API: \(realMac)")
             return (realMac, realMac.replacingOccurrences(of: ":", with: ""), peripheralUUID, true)
         }
         
         // Strategy 1B: Try alternative internal method
         if let internalMac = peripheral.internalMacAddress {
             macAddressMap[peripheralUUID] = internalMac
-            print("? Got REAL MAC address from internal property: \(internalMac)")
+            print("[MAC] Got REAL MAC from internal property: \(internalMac)")
             return (internalMac, internalMac.replacingOccurrences(of: ":", with: ""), peripheralUUID, true)
         }
         #endif
@@ -236,7 +223,7 @@ class BLEManager: NSObject, ObservableObject {
             let macBytes = Array(manufacturerData.prefix(6))
             let mac = macBytes.map { String(format: "%02X", $0) }.joined(separator: ":")
             macAddressMap[peripheralUUID] = mac
-            print("?? Got MAC from Manufacturer Data: \(mac)")
+            print("[MAC] Got MAC from Manufacturer Data: \(mac)")
             return (mac, mac.replacingOccurrences(of: ":", with: ""), peripheralUUID, false)
         }
         
@@ -268,9 +255,9 @@ class BLEManager: NSObject, ObservableObject {
         macAddressMap[peripheralUUID] = finalMac
         
         #if ENABLE_REAL_MAC_ADDRESS
-        print("?? Failed to get real MAC, using virtual: \(finalMac)")
+        print("[MAC] Failed to get real MAC, using virtual: \(finalMac)")
         #else
-        print("?? Using virtual MAC (App Store mode): \(finalMac)")
+        print("[MAC] Using virtual MAC (App Store mode): \(finalMac)")
         #endif
         
         return (finalMac, finalMac.replacingOccurrences(of: ":", with: ""), peripheralUUID, false)
