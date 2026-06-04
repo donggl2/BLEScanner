@@ -1,11 +1,11 @@
 import SwiftUI
+import UIKit
 import CoreBluetooth
 
 struct GATTDetailView: View {
     @ObservedObject var bleManager: BLEManager
     @Binding var showingGattDetail: Bool
     @Binding var selectedService: GATTService?
-    @State private var writeValue = ""
     @State private var showingCopiedToast = false
     @State private var copiedText = ""
     
@@ -152,7 +152,6 @@ struct GATTDetailView: View {
                     characteristic: characteristic,
                     bleManager: bleManager,
                     serviceUUID: selectedService?.uuid,
-                    writeValue: characteristic.hasWrite ? $writeValue : .constant(""),
                     onCopy: { text in
                         copiedText = text
                         withAnimation { showingCopiedToast = true }
@@ -177,7 +176,6 @@ struct CharacteristicCard: View {
     let characteristic: GATTCharacteristic
     let bleManager: BLEManager
     let serviceUUID: CBUUID?
-    @Binding var writeValue: String
     let onCopy: (String) -> Void
     @State private var localWriteValue = ""
     

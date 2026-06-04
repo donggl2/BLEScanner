@@ -11,7 +11,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PROJECT_PATH: BLEScanner.xcodeproj
   SCHEME: BLEScanner
-  TARGET: BLEScanner
 
 jobs:
   build:
@@ -26,22 +25,13 @@ jobs:
       with:
         xcode-version: latest-stable
 
-    - name: Verify project layout
+    - name: Verify project
       run: |
-        echo "=== Repository root ==="
-        pwd
-        ls -la
-        echo ""
-        echo "=== Xcode project ==="
-        test -f "$PROJECT_PATH/project.pbxproj" || { echo "Missing $PROJECT_PATH"; exit 1; }
-        echo ""
-        echo "=== Shared scheme ==="
-        test -f "$PROJECT_PATH/xcshareddata/xcschemes/$SCHEME.xcscheme" || { echo "Missing shared scheme"; exit 1; }
-        echo ""
-        echo "=== xcodebuild -list ==="
+        xcodebuild -version
+        test -f "$PROJECT_PATH/xcshareddata/xcschemes/$SCHEME.xcscheme"
         xcodebuild -list -project "$PROJECT_PATH"
 
-    - name: Build for iOS Simulator
+    - name: Build iOS Simulator
       run: |
         set -o pipefail
         xcodebuild \
@@ -51,11 +41,15 @@ jobs:
           -configuration Debug \
           -derivedDataPath DerivedData \
           CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGNING_REQUIRED=NO \
+          ENABLE_PREVIEWS=NO \
           ONLY_ACTIVE_ARCH=NO \
-          build 2>&1 | tee build-simulator.log
+          build 2>&1 | tee build-simulator.log || {
+            echo "=== BUILD ERRORS ==="
+            grep -E "error:|warning:.*error|failed" build-simulator.log | tail -80
+            exit 1
+          }
 
-    - name: Build for iOS Device
+    - name: Build iOS Device
       run: |
         set -o pipefail
         xcodebuild \
@@ -66,32 +60,33 @@ jobs:
           -derivedDataPath DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGN_IDENTITY="" \
+          ENABLE_PREVIEWS=NO \
           ONLY_ACTIVE_ARCH=NO \
-          build 2>&1 | tee build-device.log
+          build 2>&1 | tee build-device.log || {
+            echo "=== BUILD ERRORS ==="
+            grep -E "error:|warning:.*error|failed" build-device.log | tail -80
+            exit 1
+          }
 
     - name: Package IPA
       run: |
         APP_PATH=$(find DerivedData -path "*Release-iphoneos/*.app" -type d | head -n 1)
         if [ -z "$APP_PATH" ]; then
-          echo "Release .app not found, listing DerivedData:"
           find DerivedData -name "*.app" -type d
           exit 1
         fi
-        echo "Found app: $APP_PATH"
-        mkdir -p Payload
-        cp -r "$APP_PATH" Payload/
+        mkdir -p Payload && cp -r "$APP_PATH" Payload/
         zip -r BLEScanner.ipa Payload
         ls -lh BLEScanner.ipa
 
-    - name: Upload IPA artifact
+    - name: Upload IPA
       uses: actions/upload-artifact@v4
       with:
         name: BLEScanner-IPA
         path: BLEScanner.ipa
         retention-days: 7
 
-    - name: Upload build logs on failure
+    - name: Upload logs on failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:

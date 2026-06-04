@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct DeviceDetailView: View {
     @ObservedObject var bleManager: BLEManager

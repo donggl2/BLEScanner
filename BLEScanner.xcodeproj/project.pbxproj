@@ -16,6 +16,7 @@
 		A1B2C3E81F0A1B2C3D4E5F78 /* ScanListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3E71F0A1B2C3D4E5F77 /* ScanListView.swift */; };
 		A1B2C3EC1F0A1B2C3D4E5F7C /* DeviceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3EB1F0A1B2C3D4E5F7B /* DeviceDetailView.swift */; };
 		A1B2C3F01F0A1B2C3D4E5F80 /* GATTDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3EF1F0A1B2C3D4E5F7F /* GATTDetailView.swift */; };
+		A1B2C3F21F0A1B2C3D4E5F81 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3F11F0A1B2C3D4E5F81 /* Color+Hex.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		A1B2C3E71F0A1B2C3D4E5F77 /* ScanListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanListView.swift; sourceTree = "<group>"; };
 		A1B2C3EB1F0A1B2C3D4E5F7B /* DeviceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceDetailView.swift; sourceTree = "<group>"; };
 		A1B2C3EF1F0A1B2C3D4E5F7F /* GATTDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GATTDetailView.swift; sourceTree = "<group>"; };
+		A1B2C3F11F0A1B2C3D4E5F81 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 				A1B2C3DE1F0A1B2C3D4E5F6F /* Models */,
 				A1B2C3E21F0A1B2C3D4E5F72 /* Managers */,
 				A1B2C3E61F0A1B2C3D4E5F76 /* Views */,
+				A1B2C3F31F0A1B2C3D4E5F82 /* Extensions */,
 				A1B2C3D71F0A1B2C3D4E5F6C /* Assets.xcassets */,
 				A1B2C3D91F0A1B2C3D4E5F6E /* Preview Content */,
 				A1B2C3DC1F0A1B2C3D4E5F6E /* Info.plist */,
@@ -106,6 +109,14 @@
 				A1B2C3EF1F0A1B2C3D4E5F7F /* GATTDetailView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A1B2C3F31F0A1B2C3D4E5F82 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3F11F0A1B2C3D4E5F81 /* Color+Hex.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -184,6 +195,7 @@
 				A1B2C3E81F0A1B2C3D4E5F78 /* ScanListView.swift in Sources */,
 				A1B2C3EC1F0A1B2C3D4E5F7C /* DeviceDetailView.swift in Sources */,
 				A1B2C3F01F0A1B2C3D4E5F80 /* GATTDetailView.swift in Sources */,
+				A1B2C3F21F0A1B2C3D4E5F81 /* Color+Hex.swift in Sources */,
 				A1B2C3D41F0A1B2C3D4E5F6A /* BLEScannerApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -194,9 +206,9 @@
 		A1B2C3DC1F0A1B2C3D4E5F6F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				ASSETCATALOG_COMPILER_SKIP_APP_STORE_DEPLOYMENT = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BLEScanner/Preview Content\"";
@@ -228,9 +240,9 @@
 		A1B2C3DD1F0A1B2C3D4E5F71 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				ASSETCATALOG_COMPILER_SKIP_APP_STORE_DEPLOYMENT = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BLEScanner/Preview Content\"";
