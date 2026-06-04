@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreBluetooth
 
 struct ScanListView: View {
     @ObservedObject var bleManager: BLEManager

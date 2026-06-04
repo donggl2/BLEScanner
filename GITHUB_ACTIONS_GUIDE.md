@@ -14,19 +14,14 @@
 
 ### 步骤 2：上传代码
 
+**重要**：Git 仓库根目录必须是 `BLEScanner` 文件夹本身（内含 `.xcodeproj`），不要多包一层目录。
+
 ```bash
-# 在你的项目目录下执行
-cd BLEScanner
+cd D:\work\ai_work\rf_connect\BLEScanner
 
-# 初始化 Git
-git init
 git add .
-git commit -m "Initial commit"
-
-# 连接远程仓库（将 YOUR_USERNAME 替换为你的 GitHub 用户名）
-git remote add origin https://github.com/YOUR_USERNAME/BLEScanner.git
-git branch -M main
-git push -u origin main
+git commit -m "Fix CI build: scheme, workflow path, assets"
+git push
 ```
 
 或者直接拖拽文件夹到 GitHub 网页上传。

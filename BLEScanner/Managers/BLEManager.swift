@@ -103,7 +103,8 @@ class BLEManager: NSObject, ObservableObject {
     
     // MARK: - Private Properties
     private var centralManager: CBCentralManager!
-    private var connectedPeripheral: CBPeripheral?
+    /// Connected peripheral (internal for GATT views)
+    var connectedPeripheral: CBPeripheral?
     private var discoveredCharacteristics: [CBUUID: [GATTCharacteristic]] = [:]
     private let deviceSubject = PassthroughSubject<BLEDevice, Never>()
     private var cancellables = Set<AnyCancellable>()
@@ -138,10 +139,7 @@ class BLEManager: NSObject, ObservableObject {
         devices.removeAll()
         centralManager.scanForPeripherals(
             withServices: nil,
-            options: [
-                CBCentralManagerScanOptionAllowDuplicatesKey: true,
-                CBCentralManagerScanOptionSynchronousKey: false
-            ]
+            options: [CBCentralManagerScanOptionAllowDuplicatesKey: true]
         )
     }
     

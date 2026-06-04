@@ -63,9 +63,6 @@ jobs:
         
     - name: Build Signed IPA
       run: |
-        cd BLEScanner
-        
-        # 更新项目设置使用手动签名
         xcodebuild \
           -project BLEScanner.xcodeproj \
           -scheme BLEScanner \
@@ -80,9 +77,6 @@ jobs:
           
     - name: Archive and Export IPA
       run: |
-        cd BLEScanner
-        
-        # 创建 Archive
         xcodebuild \
           -project BLEScanner.xcodeproj \
           -scheme BLEScanner \
@@ -121,7 +115,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: BLEScanner-Signed-IPA
-        path: BLEScanner/BLEScanner-Signed.ipa
+        path: BLEScanner-Signed.ipa
         retention-days: 30
         
     - name: Cleanup
