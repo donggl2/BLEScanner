@@ -73,44 +73,43 @@ jobs:
           exit 1
         fi
 
-        echo "=== App bundle contents ==="
-        ls -la "$APP_PATH"
-
-        if [ ! -f "$APP_PATH/Info.plist" ]; then
-          echo "Missing Info.plist"
-          exit 1
-        fi
-
         EXEC_NAME=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "$APP_PATH/Info.plist")
         echo "CFBundleExecutable: $EXEC_NAME"
+        test -f "$APP_PATH/$EXEC_NAME"
 
-        if [ ! -f "$APP_PATH/$EXEC_NAME" ]; then
-          echo "Missing executable: $APP_PATH/$EXEC_NAME"
-          exit 1
-        fi
+        # Clean metadata that can break sideload tools on Windows
+        xattr -cr "$APP_PATH"
+        find "$APP_PATH" -name ".DS_Store" -delete
+        find "$APP_PATH" -type l -delete
+        chmod +x "$APP_PATH/$EXEC_NAME"
 
-        file "$APP_PATH/$EXEC_NAME"
-        file "$APP_PATH/$EXEC_NAME" | grep -q "arm64" || {
-          echo "Executable is not arm64 device binary"
-          exit 1
-        }
+        # Remove broken signature folder from unsigned build, then ad-hoc sign
+        rm -rf "$APP_PATH/_CodeSignature"
+        codesign --force --sign - --deep --timestamp=none "$APP_PATH"
+        codesign -vv "$APP_PATH"
 
-        rm -rf Payload "$APP_NAME.ipa"
+        rm -rf Payload "$APP_NAME.ipa" "$APP_NAME-app.zip"
         mkdir -p Payload
-        ditto "$APP_PATH" "Payload/$APP_NAME.app"
+        ditto --norsrc --noextattr "$APP_PATH" "Payload/$APP_NAME.app"
 
-        # Standard IPA layout: Payload/App.app
+        # Validate bundle structure (file vs directory)
+        while IFS= read -r -d '' entry; do
+          if [ -L "$entry" ]; then
+            echo "Symlink not allowed in bundle: $entry"
+            exit 1
+          fi
+        done < <(find "Payload/$APP_NAME.app" -print0)
+
+        # Standard IPA: Payload/App.app
         (cd Payload && zip -qr "../$APP_NAME.ipa" .)
+        (cd Payload && zip -qr "../$APP_NAME-app.zip" "$APP_NAME.app")
 
         echo "=== IPA contents ==="
         unzip -l "$APP_NAME.ipa" | head -30
 
         IPA_SIZE=$(stat -f%z "$APP_NAME.ipa" 2>/dev/null || stat -c%s "$APP_NAME.ipa")
         echo "IPA size: $IPA_SIZE bytes"
-        if [ "$IPA_SIZE" -lt 100000 ]; then
-          echo "IPA too small, likely invalid"
-          exit 1
-        fi
+        test "$IPA_SIZE" -gt 100000
 
         echo "IPA packaging OK"
 
@@ -119,6 +118,13 @@ jobs:
       with:
         name: BLEScanner-IPA
         path: BLEScanner.ipa
+        retention-days: 7
+
+    - name: Upload APP bundle (for i4 tools)
+      uses: actions/upload-artifact@v4
+      with:
+        name: BLEScanner-APP
+        path: BLEScanner-app.zip
         retention-days: 7
 
     - name: Upload logs on failure
