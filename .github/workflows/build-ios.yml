@@ -11,6 +11,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PROJECT_PATH: BLEScanner.xcodeproj
   SCHEME: BLEScanner
+  APP_NAME: BLEScanner
 
 jobs:
   build:
@@ -31,7 +32,7 @@ jobs:
         test -f "$PROJECT_PATH/xcshareddata/xcschemes/$SCHEME.xcscheme"
         xcodebuild -list -project "$PROJECT_PATH"
 
-    - name: Build iOS Simulator
+    - name: Build iOS Simulator (compile check)
       run: |
         set -o pipefail
         xcodebuild \
@@ -43,41 +44,75 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           ENABLE_PREVIEWS=NO \
           ONLY_ACTIVE_ARCH=NO \
-          build 2>&1 | tee build-simulator.log || {
-            echo "=== BUILD ERRORS ==="
-            grep -E "error:|warning:.*error|failed" build-simulator.log | tail -80
-            exit 1
-          }
+          build 2>&1 | tee build-simulator.log
 
-    - name: Build iOS Device
+    - name: Archive for iOS Device
       run: |
         set -o pipefail
-        xcodebuild \
+        xcodebuild archive \
           -project "$PROJECT_PATH" \
           -scheme "$SCHEME" \
           -sdk iphoneos \
           -configuration Release \
-          -derivedDataPath DerivedData \
+          -archivePath "build/$APP_NAME.xcarchive" \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
           ENABLE_PREVIEWS=NO \
           ONLY_ACTIVE_ARCH=NO \
-          build 2>&1 | tee build-device.log || {
-            echo "=== BUILD ERRORS ==="
-            grep -E "error:|warning:.*error|failed" build-device.log | tail -80
-            exit 1
-          }
+          2>&1 | tee build-archive.log
 
-    - name: Package IPA
+    - name: Package and validate IPA
       run: |
-        APP_PATH=$(find DerivedData -path "*Release-iphoneos/*.app" -type d | head -n 1)
-        if [ -z "$APP_PATH" ]; then
-          find DerivedData -name "*.app" -type d
+        set -euo pipefail
+
+        APP_PATH="build/$APP_NAME.xcarchive/Products/Applications/$APP_NAME.app"
+        if [ ! -d "$APP_PATH" ]; then
+          echo "App bundle not found at: $APP_PATH"
+          find build -name "*.app" -type d
           exit 1
         fi
-        mkdir -p Payload && cp -r "$APP_PATH" Payload/
-        zip -r BLEScanner.ipa Payload
-        ls -lh BLEScanner.ipa
+
+        echo "=== App bundle contents ==="
+        ls -la "$APP_PATH"
+
+        if [ ! -f "$APP_PATH/Info.plist" ]; then
+          echo "Missing Info.plist"
+          exit 1
+        fi
+
+        EXEC_NAME=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "$APP_PATH/Info.plist")
+        echo "CFBundleExecutable: $EXEC_NAME"
+
+        if [ ! -f "$APP_PATH/$EXEC_NAME" ]; then
+          echo "Missing executable: $APP_PATH/$EXEC_NAME"
+          exit 1
+        fi
+
+        file "$APP_PATH/$EXEC_NAME"
+        file "$APP_PATH/$EXEC_NAME" | grep -q "arm64" || {
+          echo "Executable is not arm64 device binary"
+          exit 1
+        }
+
+        rm -rf Payload "$APP_NAME.ipa"
+        mkdir -p Payload
+        ditto "$APP_PATH" "Payload/$APP_NAME.app"
+
+        # Standard IPA layout: Payload/App.app
+        (cd Payload && zip -qr "../$APP_NAME.ipa" .)
+
+        echo "=== IPA contents ==="
+        unzip -l "$APP_NAME.ipa" | head -30
+
+        IPA_SIZE=$(stat -f%z "$APP_NAME.ipa" 2>/dev/null || stat -c%s "$APP_NAME.ipa")
+        echo "IPA size: $IPA_SIZE bytes"
+        if [ "$IPA_SIZE" -lt 100000 ]; then
+          echo "IPA too small, likely invalid"
+          exit 1
+        fi
+
+        echo "IPA packaging OK"
 
     - name: Upload IPA
       uses: actions/upload-artifact@v4
@@ -93,5 +128,5 @@ jobs:
         name: build-logs
         path: |
           build-simulator.log
-          build-device.log
+          build-archive.log
         retention-days: 3
