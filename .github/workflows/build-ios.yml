@@ -55,9 +55,9 @@ jobs:
           -sdk iphoneos \
           -configuration Release \
           -archivePath "build/$APP_NAME.xcarchive" \
-          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGNING_ALLOWED=YES \
           CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGN_IDENTITY="" \
+          CODE_SIGN_IDENTITY="-" \
           ENABLE_PREVIEWS=NO \
           ONLY_ACTIVE_ARCH=NO \
           2>&1 | tee build-archive.log
@@ -77,13 +77,11 @@ jobs:
         echo "CFBundleExecutable: $EXEC_NAME"
         test -f "$APP_PATH/$EXEC_NAME"
 
-        # Clean metadata that can break sideload tools on Windows
         xattr -cr "$APP_PATH"
         find "$APP_PATH" -name ".DS_Store" -delete
         find "$APP_PATH" -type l -delete
         chmod +x "$APP_PATH/$EXEC_NAME"
 
-        # Remove broken signature folder from unsigned build, then ad-hoc sign
         rm -rf "$APP_PATH/_CodeSignature"
         codesign --force --sign - --deep --timestamp=none "$APP_PATH"
         codesign -vv "$APP_PATH"
@@ -92,15 +90,6 @@ jobs:
         mkdir -p Payload
         ditto --norsrc --noextattr "$APP_PATH" "Payload/$APP_NAME.app"
 
-        # Validate bundle structure (file vs directory)
-        while IFS= read -r -d '' entry; do
-          if [ -L "$entry" ]; then
-            echo "Symlink not allowed in bundle: $entry"
-            exit 1
-          fi
-        done < <(find "Payload/$APP_NAME.app" -print0)
-
-        # Standard IPA: Payload/App.app
         (cd Payload && zip -qr "../$APP_NAME.ipa" .)
         (cd Payload && zip -qr "../$APP_NAME-app.zip" "$APP_NAME.app")
 
@@ -111,6 +100,9 @@ jobs:
         echo "IPA size: $IPA_SIZE bytes"
         test "$IPA_SIZE" -gt 100000
 
+        find "Payload/$APP_NAME.app" -type f | sort > app-manifest.txt
+        cat app-manifest.txt
+
         echo "IPA packaging OK"
 
     - name: Upload IPA
@@ -120,11 +112,18 @@ jobs:
         path: BLEScanner.ipa
         retention-days: 7
 
-    - name: Upload APP bundle (for i4 tools)
+    - name: Upload APP bundle
       uses: actions/upload-artifact@v4
       with:
         name: BLEScanner-APP
         path: BLEScanner-app.zip
+        retention-days: 7
+
+    - name: Upload manifest
+      uses: actions/upload-artifact@v4
+      with:
+        name: BLEScanner-manifest
+        path: app-manifest.txt
         retention-days: 7
 
     - name: Upload logs on failure

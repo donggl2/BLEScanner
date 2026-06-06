@@ -177,7 +177,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1B2C3DB1F0A1B2C3D4E5F6D /* Preview Assets.xcassets in Resources */,
 				A1B2C3D81F0A1B2C3D4E5F6C /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -228,7 +227,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.BLEScanner;
+				PRODUCT_BUNDLE_IDENTIFIER = com.donggl2.blescanner;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				OTHER_SWIFT_FLAGS = "$(inherited) -DENABLE_REAL_MAC_ADDRESS";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -263,7 +262,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -DENABLE_REAL_MAC_ADDRESS";
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.BLEScanner;
+				PRODUCT_BUNDLE_IDENTIFIER = com.donggl2.blescanner;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
